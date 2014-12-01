@@ -25,7 +25,7 @@ public class HostB {
     //The byteContainer to hold the controlCommand 
     public static byte[] receiveCommandContainer = new byte[8];
 
-    public static byte[] sendData = new byte[1048];
+    public static byte[] sendData = new byte[90];
 
     //The max amount of packets we're going to send
     public static int pax;
@@ -220,6 +220,8 @@ public class HostB {
             Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+        
+        
         return outputStream.toByteArray();
     }
 

@@ -163,8 +163,8 @@ class HostThread implements Runnable {
         //change this shit later
         DatagramSocket forwardSocket = new DatagramSocket();
            
-           byte[] receiveData =  new byte[1024];
-           byte[] sendData = new byte[1024];
+           byte[] receiveData =  new byte[90];
+           byte[] sendData = new byte[90];
         while(true)
         {
              DatagramPacket receivePacket = new DatagramPacket(receiveData,receiveData.length);

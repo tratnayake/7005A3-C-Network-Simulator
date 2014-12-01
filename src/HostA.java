@@ -25,7 +25,7 @@ public class HostA {
     //The byteContainer to hold the controlCommand 
     public static byte[] receiveCommandContainer = new byte[8];
 
-    public static byte[] sendData = new byte[1048];
+    public static byte[] sendData = new byte[90];
 
     //The max amount of packets we're going to send
     public static int pax;
@@ -274,7 +274,7 @@ public class HostA {
 
         try {
             System.out.println("Inside receive()");
-            byte[] receiveData = new byte[1024];
+            byte[] receiveData = new byte[90];
             System.out.println("socket created, waiting to receive");
             DatagramSocket listenSocket = new DatagramSocket(listenPort);
             while (true) {
@@ -312,7 +312,7 @@ public class HostA {
         System.out.println("IN RECEIVE MODE");
         try {
             System.out.println("Inside receiveAck");
-            byte[] receiveData = new byte[1024];
+            byte[] receiveData = new byte[90];
             System.out.println("socket created, waiting to receive");
             DatagramSocket listenSocket = new DatagramSocket(listenPort);
             while (true) {
