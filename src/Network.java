@@ -25,16 +25,29 @@ public class Network {
 
     public static void main(String args[]) throws Exception {
         
-        //HostA InetAddress;
-         HostAaddr = InetAddress.getByName("localhost");
+        Scanner scan = new Scanner(System.in);
+        
         
         //HostB InetAddress
          HostBaddr = InetAddress.getByName("localhost");
         
         System.out.println("Welcome to the NETWORK for T and Elton's Assignment3");
+        
+        
+        System.out.println("Please enter in the IP address for Host A");
+        String hostAaddress = scan.nextLine();
+        HostAaddr = InetAddress.getByName(hostAaddress);
+        System.out.println("IP for Host A is "+HostAaddr);
+        
+        System.out.println("Please enter in the IP address for Host B");
+        String hostBaddress = scan.nextLine();
+        HostBaddr = InetAddress.getByName(hostBaddress);
+        System.out.println("IP for Host B is "+HostBaddr);
+       
+        
         System.out.println("There are two hosts available for this simulation. Please choose which Host you would like to send from?");
         System.out.println("*NOTE* The host that isn't provided will be the receiver");
-        Scanner scan = new Scanner(System.in);
+        
         boolean loopCondition = true;
         while(loopCondition == true){
         String sender = scan.nextLine();

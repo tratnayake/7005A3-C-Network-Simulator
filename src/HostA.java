@@ -65,6 +65,12 @@ public class HostA {
         listenPort = 8006;
 
         timeOutLength = 500;
+        
+        System.out.println("Please enter in the IP address for Network");
+        Scanner scan = new Scanner(System.in);
+        String networkAddress = scan.nextLine();
+        networkAddr = InetAddress.getByName(networkAddress);
+        System.out.println("IP for network is "+networkAddr);
 
         //New socket purely meant for listening to commands from NET
         DatagramSocket commandSocket = new DatagramSocket(5004);
@@ -233,7 +239,7 @@ public class HostA {
             }
 
             timer = new Timer();
-            timer.schedule(new timeOut() {
+            timer.schedule(new timeOut("A") {
             }, timeOutLength);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed");
@@ -405,13 +411,4 @@ public class HostA {
 
 }
 
-abstract class timeOut extends TimerTask {
 
-    public void run() {
-        System.out.println("TIME OUT!");
-        HostA.TIMEOUT();
-        //If all other packets in the array are LOSS, then that means 
-
-    }
-
-}
