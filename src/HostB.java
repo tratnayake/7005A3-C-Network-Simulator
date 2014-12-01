@@ -53,22 +53,21 @@ public class HostB {
     public static ArrayList<Packet> ackedPacketsContainer;
 
     public static void main(String args[]) throws Exception {
-
-        pax = 15;
-        window = 5;
+        Config config = new Config();
+        
+        pax = Integer.parseInt(config.getProp().getProperty("pacs"));
+        window = Integer.parseInt(config.getProp().getProperty("windowsize"));
         //START SEQUENCE NUMBERS FROM 1!
-        seqNum = 1;
+        seqNum = Integer.parseInt(config.getProp().getProperty("sequenceNum"));
 
         networkAddr = InetAddress.getByName("localhost");
         networkPort = 7006;
 
         listenPort = 8005;
 
-        timeOutLength = 500;
+        timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 3;
         
-        System.out.println("Please enter in the IP address for Network");
-        Scanner scan = new Scanner(System.in);
-        String networkAddress = scan.nextLine();
+        String networkAddress = config.getProp().getProperty("hostBToNet");
         networkAddr = InetAddress.getByName(networkAddress);
         System.out.println("IP for network is "+networkAddr);
 

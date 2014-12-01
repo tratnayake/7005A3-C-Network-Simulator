@@ -51,24 +51,26 @@ public class HostA {
     public static long timeOutLength;
 
     public static ArrayList<Packet> ackedPacketsContainer;
+    
 
     public static void main(String args[]) throws Exception {
-
-        pax = 15;
-        window = 5;
-        //START SEQUENCE NUMBERS FROM 1!
-        seqNum = 1;
-
+        
+        Config config = new Config();
+        
         networkAddr = InetAddress.getByName("localhost");
+        
+        pax = Integer.parseInt(config.getProp().getProperty("pacs"));
+        window = Integer.parseInt(config.getProp().getProperty("windowsize"));
+        //START SEQUENCE NUMBERS FROM 1!
+        seqNum = Integer.parseInt(config.getProp().getProperty("sequenceNum"));
+
         networkPort = 7005;
 
         listenPort = 8006;
 
-        timeOutLength = 500;
+        timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 3;
         
-        System.out.println("Please enter in the IP address for Network");
-        Scanner scan = new Scanner(System.in);
-        String networkAddress = scan.nextLine();
+        String networkAddress = config.getProp().getProperty("hostAToNet");
         networkAddr = InetAddress.getByName(networkAddress);
         System.out.println("IP for network is "+networkAddr);
 

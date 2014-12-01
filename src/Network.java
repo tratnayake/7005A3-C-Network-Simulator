@@ -21,30 +21,22 @@ public class Network {
     public static String controlMessage;
     public static int aControlPort = 5004;
     public static int bControlPort = 5005;
+    public static InetAddress hostA;
+    public static InetAddress hostB;
+    public static Config config;
+    public static int hostASRCPort;
+    public static int hostADSTPort;
+    public static int hostBSRCPort;
+    public static int hostBDSTPort; 
+    public static int timer;
             
 
     public static void main(String args[]) throws Exception {
         
+        timer = Integer.parseInt(config.getProp().getProperty("delay"));
         Scanner scan = new Scanner(System.in);
-        
-        
-        //HostB InetAddress
-         HostBaddr = InetAddress.getByName("localhost");
-        
-        System.out.println("Welcome to the NETWORK for T and Elton's Assignment3");
-        
-        
-        System.out.println("Please enter in the IP address for Host A");
-        String hostAaddress = scan.nextLine();
-        HostAaddr = InetAddress.getByName(hostAaddress);
-        System.out.println("IP for Host A is "+HostAaddr);
-        
-        System.out.println("Please enter in the IP address for Host B");
-        String hostBaddress = scan.nextLine();
-        HostBaddr = InetAddress.getByName(hostBaddress);
-        System.out.println("IP for Host B is "+HostBaddr);
-       
-        
+        config = new Config();
+
         System.out.println("There are two hosts available for this simulation. Please choose which Host you would like to send from?");
         System.out.println("*NOTE* The host that isn't provided will be the receiver");
         
@@ -70,24 +62,31 @@ public class Network {
         }
         
     }
-        
-        
+
         System.out.println("Note that this is the percentage of drop rate for each packet");
         System.out.println("How many packets would you like to drop?");
-        
         int bitErr = scan.nextInt();
         System.out.println("You have chosen to drop " + bitErr + " packets");
         sendControlSignal(controlMessage);
         System.out.println("Control messages sent to hosts \n BEGIN!");
         
+        //config file used to get specified addresses and ports
+        hostA = InetAddress.getByName((String)config.getProp().getProperty("hostIPA"));
+        hostB = InetAddress.getByName((String)config.getProp().getProperty("hostIPB"));
         
+        hostASRCPort = Integer.parseInt(config.getProp().getProperty("hostASRCPrt"));
+        hostADSTPort = Integer.parseInt(config.getProp().getProperty("hostADSTPrt"));
+        
+        hostBSRCPort = Integer.parseInt(config.getProp().getProperty("hostBSRCPrt"));
+        hostBDSTPort = Integer.parseInt(config.getProp().getProperty("hostBDSTPrt"));
         //Create a new thread that LISTENS to HOST A on 7005, and FORWARDS to B:8005
-        HostThread HostA = new HostThread("HostA",7005,8005,bitErr);
+
+        HostThread HostA = new HostThread("HostA",hostASRCPort,hostADSTPort,bitErr,hostB);
         Thread HostAThread = new Thread(HostA);
         HostAThread.start();
         
         //Thread LISTENS to HOST B on 7006, FORWARDS to A: 8006
-        HostThread HostB = new HostThread("HostB",7006,8006,bitErr);
+        HostThread HostB = new HostThread("HostB",hostBSRCPort,hostBDSTPort,bitErr,hostA);
         Thread HostBThread = new Thread(HostB);
         HostBThread.start();
         
@@ -98,7 +97,10 @@ public class Network {
     }
     
     public static void sendControlSignal(String sender){
+
         try {
+            hostA = InetAddress.getByName((String)config.getProp().getProperty("hostIPA"));
+            hostB = InetAddress.getByName((String)config.getProp().getProperty("hostIPB"));
             DatagramSocket aSocket = new DatagramSocket();
             DatagramSocket bSocket = new DatagramSocket();
             
@@ -120,8 +122,8 @@ public class Network {
             dataContainerA = aCommand.getBytes();
             dataContainerB = bCommand.getBytes();
             
-            DatagramPacket aCommandPacket = new DatagramPacket(dataContainerA,dataContainerA.length,HostAaddr,aControlPort);
-            DatagramPacket bCommandPacket = new DatagramPacket(dataContainerB, dataContainerB.length,HostBaddr,bControlPort);
+            DatagramPacket aCommandPacket = new DatagramPacket(dataContainerA,dataContainerA.length,hostA,aControlPort);
+            DatagramPacket bCommandPacket = new DatagramPacket(dataContainerB, dataContainerB.length,hostB,bControlPort);
             
             aSocket.send(aCommandPacket);
             bSocket.send(bCommandPacket);
@@ -145,12 +147,14 @@ class HostThread implements Runnable {
    private int listenPort;
    private int forwardPort;
    private int drop;
+   public InetAddress sendAddr;
    
-   HostThread(String name, int listen, int forward, int droprate){
+   HostThread(String name, int listen, int forward, int droprate, InetAddress send){
        threadName = name;
        listenPort = listen;
        forwardPort = forward;
        drop = droprate;
+       this.sendAddr = send;
        
        System.out.println(name + "instantiated" );
    }
@@ -165,6 +169,7 @@ class HostThread implements Runnable {
            
            byte[] receiveData =  new byte[90];
            byte[] sendData = new byte[90];
+
         while(true)
         {
              DatagramPacket receivePacket = new DatagramPacket(receiveData,receiveData.length);
@@ -202,16 +207,17 @@ class HostThread implements Runnable {
                     }
                    
                     //Forward to second host
-                  
+                    Thread.sleep(Network.timer);
                    //SERIALIZE packet back down into byte stream
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     ObjectOutputStream os = new ObjectOutputStream(outputStream);
                     os.writeObject(packet); 
                     sendData = outputStream.toByteArray();
-                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, InetAddress.getByName("localhost") ,forwardPort );
+                    DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, sendAddr ,forwardPort );
+                    System.out.println("sendaddr " + sendAddr);
                     forwardSocket.send(sendPacket);
                     //System.out.println("TX to "+forwardSocket.getInetAddress());
-                     System.out.println("TX | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType())+" TO  "+forwardSocket.getInetAddress() );
+                     System.out.println("TX | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType())+" TO  "+sendAddr+":"+forwardPort  );
                }
                catch(Exception e){
                    e.printStackTrace();
@@ -234,9 +240,7 @@ class HostThread implements Runnable {
       case 3: type = "EOT";
               break;
       case 4: type = "LOSS";
-              break;
-      
-        
+              break;  
   }
   
   return type;
