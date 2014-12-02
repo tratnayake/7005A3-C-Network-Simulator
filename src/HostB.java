@@ -1,6 +1,4 @@
 
-
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -63,6 +61,10 @@ public class HostB {
 
     public static int controlPort;
     
+    public static boolean LAST;
+    
+    public static ArrayList<Packet> remainingPacketsContainer;
+    
     public static void main(String args[]) throws Exception {
         
         Config config = new Config();
@@ -90,7 +92,7 @@ public class HostB {
 
         
 
-        timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 3;
+        timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 4;
         
         String networkAddress = config.getProp().getProperty("hostBToNet");
         networkAddr = InetAddress.getByName(networkAddress);
@@ -104,6 +106,15 @@ public class HostB {
         writer.println(timeStamp()+": "+"Start Command is " + startCommand);
 
         //Create new packetsContainer to hold packets (this is essentially our window)
+        
+        remainingPacketsContainer = new ArrayList<>();
+        //POPULATE A 15 PACKETS INTO THE ARRAY LIST
+        for(int i = 1; i <=pax; i ++){
+           Packet packet = new Packet (1,i,window,i);
+           remainingPacketsContainer.add(packet);
+        }
+        System.out.println(remainingPacketsContainer.size()+ "packets created");
+        
         packetsContainer = new ArrayList<>();
 
         ackedPacketsContainer = new ArrayList<>();
@@ -208,13 +219,12 @@ public class HostB {
                 if (packetsContainer.size() > 0) {
                     sendPackets(packetsContainer);
                 } else {
-                    System.out.println("\n **********END OF SESSION***************\n");
+                    
                     //System.out.println("Packets container is size " + packetsContainer.size());
                     //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
                     //System.out.println("Check this, PAX #" + pax);
                     //System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
-                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
-                    writer.close();
+                    
                 }
             } else {
                 System.out.println("seqNum @ max, LASTPACKET SCENARIO");
@@ -224,12 +234,12 @@ public class HostB {
                     try {
                         Packet packet = new Packet(3, seqNum, 5, seqNum);
                         DatagramSocket sendSocket = new DatagramSocket();
-                        HostA.sendPacket(packet, sendSocket);
+                        HostB.sendPacket(packet, sendSocket);
                         sendSocket.close();
                         System.out.println("EOT packet SENT!");
                         writer.println(timeStamp()+": "+"**EOT PACKET SENT!**");
                     } catch (SocketException ex) {
-                        Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } //SOMEWHATFUL window scenario
                 else {
@@ -240,13 +250,35 @@ public class HostB {
                     //System.out.println("Packet created for " + i);
                     System.out.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
 
-                    HostA.sendPackets(packetsContainer);
+                    HostB.sendPackets(packetsContainer);
 
                 }
             }
         }
     }
-
+    // Check if this is the last seqNum
+    public static void checkLast(){
+        if (seqNum == pax){
+            System.out.println("LAST!!");
+            LAST();
+            LAST = true;
+            sendMode = false;
+            
+            RECEIVE();
+        }
+    }
+    
+    public static void LAST(){
+        //Create the last packet
+        Packet packet = new Packet(1,pax,5, pax);
+        packetsContainer.add(packet);
+        sendPackets(packetsContainer);  
+    }
+    
+    public static void sendEOT(){
+        System.out.println("SEND EOT PEW PEW");
+        
+    }
     public static byte[] prepPacket(Packet packet) {
         //Serialize packet object into a bytearray
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -281,7 +313,7 @@ public class HostB {
             }
 
             timer = new Timer();
-            timer.schedule(new timeOut("B") {
+            timer.schedule(new timeOut("A") {
             }, timeOutLength);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed \n\n");
@@ -356,13 +388,13 @@ public class HostB {
                     checkArray();
 
                 } catch (IOException ex) {
-                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } catch (SocketException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -419,9 +451,7 @@ public class HostB {
 
     }
 
-    public static void setLoss() {
-
-    }
+    
 
     public static void removeInWindow(int sequenceNum) {
 
@@ -433,6 +463,8 @@ public class HostB {
 
             }
         }
+        
+        System.out.println("Remove in window method , size at end = "+ packetsContainer.size());
 
     }
 
@@ -492,9 +524,8 @@ public class HostB {
               break;
       case 4: type = "LOSS";
               break;
-      case 5: type = "EOTACK";
+      case 5: type =  "EOTACK";
                 break;
-          
   }
   
   return type;
