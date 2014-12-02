@@ -112,7 +112,7 @@ public class HostA {
            Packet packet = new Packet (1,i,window,i);
            remainingPacketsContainer.add(packet);
         }
-        System.out.println(packetsContainer.size()+ "packets created");
+        System.out.println(remainingPacketsContainer.size()+ "packets created");
         
         packetsContainer = new ArrayList<>();
 
