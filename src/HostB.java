@@ -382,10 +382,10 @@ public class HostB {
                         //Convert the packet into an ACK
                         packet.setPacketType(2);
                     }
-                    else{
-                        if (packet.getPacketType() == 3){
+                    else if (packet.getPacketType() == 3){
+                            System.out.println("GOT AN EOT, SETTING TO EOTACK");
                             packet.setPacketType(5);
-                        }
+                        
                     }
 
                     DatagramSocket sendSocket = new DatagramSocket();
