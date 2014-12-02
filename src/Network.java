@@ -211,7 +211,7 @@ class HostThread implements Runnable {
                     }
                    
                     //DELAYY
-                    Thread.sleep(2500);
+                    Thread.sleep(Network.timer);
                    //SERIALIZE packet back down into byte stream
                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                     ObjectOutputStream os = new ObjectOutputStream(outputStream);
