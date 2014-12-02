@@ -329,7 +329,7 @@ public class HostA {
 
         try {
             //check if EOT
-            if (packetObj.getPacketType() == 5) {
+            if (packetObj.getPacketType() == 3) {
                 //set type to EOT
                 packetObj.setPacketType(5);
                 writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
