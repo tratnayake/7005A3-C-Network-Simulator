@@ -60,6 +60,8 @@ public class HostA {
 
     public static int controlPort;
     
+    public static boolean LAST;
+    
     public static void main(String args[]) throws Exception {
         
         Config config = new Config();
@@ -151,14 +153,13 @@ public class HostA {
         return command;
     }
 
-    public static void SEND() {
-
-        //Only do this  if sequence number is != max
-        if (seqNum < pax) {
-            //1. EMPTY WINDOW Scenario: Starting from seqNum 1 -> window, add a packet into packet Container
-            if (packetsContainer.size() == 0) {
-                System.out.println("Point 1");
-                for (int i = 1; i <= window; i++) {
+    public static void SEND(){
+    if (!LAST){
+         //S1: Empty container
+        if(packetsContainer.isEmpty()){
+            
+            for (int i = 1; i <= window; i++) {
+                    checkLast();
                     //Create the packets to send
                     Packet packet = new Packet(1, seqNum, 5, seqNum);
                     //Add those packets to the container (window)
@@ -169,12 +170,12 @@ public class HostA {
                     //Increase the sequence number
                     seqNum++;
                 }
-            } //2. SOMEWHAT FULL WINDOW Scenario 2: Some pax were dropped, which means window still has some pax. e.g. 1,2,3. START @ 4
-            else if (seqNum == pax) {
-                System.out.println("Point 2");
-
-                for (int i = packetsContainer.size() + 1; i <= window; i++) {
-                    System.out.println("Point 3");
+        }
+        //S2: Not Empty container
+        else{
+            System.out.println("Not Empty container becuz size "+packetsContainer.size());
+            for (int i = packetsContainer.size() + 1; i <= window; i++) {
+                    checkLast();
                     //Create the packets to send
                     Packet packet = new Packet(1, seqNum, 5, seqNum);
                     //Add those packets to the container (window)
@@ -185,74 +186,52 @@ public class HostA {
                     //Increase the sequence number
                     seqNum++;
                 }
-
-            } else if (seqNum > pax) {
-                System.out.println("Point 4");
-                System.out.println("The seqNum is greater than MAX so don't send anymore!");
-                writer.println(timeStamp()+": "+"The seqNum is greater than MAX so don't send anymore!");
-                
-            }
-
-            //Send those packets
+        }
+        
+        sendPackets(packetsContainer);
+        
+        sendMode = false;
+    }
+    // This is the LAST in our max
+    else{
+        
+        //If there are still pax in flight
+        if(!packetsContainer.isEmpty()){
             sendPackets(packetsContainer);
-        //Send those pax
-
-            //go into receiveMode
             sendMode = false;
-        } else {
-            System.out.println("Point 5");
-            //if sequence number is larger than max. IGNORE, This should never execute
-            if (seqNum > pax) {
-                writer.println(timeStamp()+": "+"seqNum > MAX, CEASE sending.");
-                writer.println(timeStamp()+": "+"# of pax in container: " + packetsContainer.size());
-
-                //If there's still pax in the container, keep resending till they get through
-                if (packetsContainer.size() > 0) {
-                    System.out.println("Point 6");
-                    sendPackets(packetsContainer);
-                } else {
-                    System.out.println("Point 7");
-                    System.out.println("Before timer");
-                    timer.cancel();
-                    System.out.println("After Timer");
-                    System.out.println("\n **********END OF SESSION***************\n");
-                    //System.out.println("Packets container is size " + packetsContainer.size());
-                    //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
-                    //System.out.println("Check this, PAX #" + pax);
-                    //System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
-                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
-                    writer.close();
-                }
-            } 
-            else if (seqNum == pax)//seqNum must be == to pax 
-            {
-                System.out.println("Point 8");
-                //If there's nothing in the array, just send this packet and boom you're done.
-                if(packetsContainer.size() == 0){
-                    System.out.println("seqNum is @ EOT packet, &array is empty");
-                    try {
-                        //Make the EOT
-                        Packet EOTpacket = new Packet (3, seqNum,5, seqNum);
-                        DatagramSocket sendSocket = new DatagramSocket();
-                        sendPacket(EOTpacket,sendSocket);
-                        sendSocket.close();
-                    } catch (SocketException ex) {
-                        Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    
-                }
-                
-                else //sequenceNum @ EOT. Stuff still in array so purgeit, then send EOT
-                {
-                    System.out.println("Point 9");
-                    sendPackets(packetsContainer);
-                    sendMode = false;
-                    
-                }
-            }
+        }
+        
+        else{
+            System.out.println("All packets have been sent, array size is "+packetsContainer.size());
+            System.out.println("\n ******ALL THATS LEFT IS EOT***** \n");
+            sendEOT();
+        }
+        
+    }
+        
+    }
+    // Check if this is the last seqNum
+    public static void checkLast(){
+        if (seqNum == pax){
+            
+            LAST();
+            LAST = true;
+            sendMode = false;
+            
+            RECEIVE();
         }
     }
-
+    
+    public static void LAST(){
+        //Create the last packet
+        Packet packet = new Packet(1,pax,5, pax);
+        packetsContainer.add(packet);
+        sendPackets(packetsContainer);  
+    }
+    
+    public static void sendEOT(){
+        System.out.println("SEND EOT PEW PEW");
+    }
     public static byte[] prepPacket(Packet packet) {
         //Serialize packet object into a bytearray
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -324,9 +303,9 @@ public class HostA {
     }
 
     public static void RECEIVE() {
-
+        
         try {
-            System.out.println("Inside receive()");
+            System.out.println("STARTING RECEIVE()");
             byte[] receiveData = new byte[90];
             System.out.println("socket created, waiting to receive");
             DatagramSocket listenSocket = new DatagramSocket(listenPort);
