@@ -377,10 +377,15 @@ public class HostB {
                     writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
 
                     //If the packet is not an EOT, 
-                    if (packet.getPacketType() != 3) {
+                    if (packet.getPacketType() == 1) {
 
-                        //Convert the packet into an EOTACK
-                        packet.setPacketType(5);
+                        //Convert the packet into an ACK
+                        packet.setPacketType(2);
+                    }
+                    else{
+                        if (packet.getPacketType() == 3){
+                            packet.setPacketType(5);
+                        }
                     }
 
                     DatagramSocket sendSocket = new DatagramSocket();
