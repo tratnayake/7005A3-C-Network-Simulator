@@ -410,7 +410,14 @@ public class HostA {
                     }
 
                     DatagramSocket sendSocket = new DatagramSocket();
+                    if (packet.getPacketType() ==5){
                     sendPacket(packet, sendSocket);
+                    writer.close();
+                    }
+                    else{
+                    sendPacket(packet, sendSocket);
+                    }
+                    
                     sendSocket.close();
 
                 } catch (IOException ex) {

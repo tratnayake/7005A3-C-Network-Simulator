@@ -1,4 +1,5 @@
 
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -410,8 +411,13 @@ public class HostB {
                     }
 
                     DatagramSocket sendSocket = new DatagramSocket();
+                    if (packet.getPacketType() ==5){
                     sendPacket(packet, sendSocket);
-                    sendSocket.close();
+                    writer.close();
+                    }
+                    else{
+                    sendPacket(packet, sendSocket);
+                    }
 
                 } catch (IOException ex) {
                     Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
