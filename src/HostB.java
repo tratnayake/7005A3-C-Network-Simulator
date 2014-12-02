@@ -313,7 +313,7 @@ public class HostB {
             }
 
             timer = new Timer();
-            timer.schedule(new timeOut("A") {
+            timer.schedule(new timeOut("B") {
             }, timeOutLength);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed \n\n");
