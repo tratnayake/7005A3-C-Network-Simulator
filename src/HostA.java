@@ -351,6 +351,8 @@ public class HostA {
     }
 
     public static void RECEIVE() {
+        
+        
 
         try {
             System.out.println("Inside receive()");
@@ -372,9 +374,16 @@ public class HostA {
 
                     System.out.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
                     writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
+                    
+                    //check if EOT END STATE
+                            
 
                     removeInWindow(packet.getSeqNum());
 
+                        if (packet.getPacketType() ==5 && packetsContainer.isEmpty()) {
+                                System.out.println("YOU ARE DONE BECAUSE NOTHING LEFT IN CONTAINER");
+                                System.exit(seqNum);
+                            }
                     checkArray();
 
                 } catch (IOException ex) {
@@ -448,6 +457,8 @@ public class HostA {
 
             }
         }
+        
+        System.out.println("Remove in window method , size at end = "+ packetsContainer.size());
 
     }
 
