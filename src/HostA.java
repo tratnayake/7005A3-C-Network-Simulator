@@ -1,3 +1,4 @@
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -164,33 +165,97 @@ public class HostA {
         return command;
     }
 
-    public static void SEND(){
-        
-        ArrayList<Packet> WINDOW = new ArrayList<>();
-        
-        //FIll the window
-        for (int i = 1; i <= 5 ; i++){
-            WINDOW.add(remainingPacketsContainer.get(i));
-            System.out.println("Window "+i+ "filled");
-            
-        }
-        
-        for (int i = 0; i < packetsContainer.size(); i++) {
-            //if the next packet in total is an EOT 
-            if(remainingPacketsContainer.get(i).getPacketType() == 3){
-                if(remainingPacketsContainer.size() == 1){
-                    sendEOT();
-                } 
+    public static void SEND() {
+
+        //Only do this  if sequence number is != max
+        if (seqNum < pax) {
+            //1. EMPTY WINDOW Scenario: Starting from seqNum 1 -> window, add a packet into packet Container
+            if (packetsContainer.size() == 0) {
+                for (int i = 1; i <= window; i++) {
+                    //Create the packets to send
+                    Packet packet = new Packet(1, seqNum, 5, seqNum);
+                    //Add those packets to the container (window)
+                    packetsContainer.add(packet);
+                    //System.out.println("Packet created for " + i);
+                    
+                    writer.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
+                    //Increase the sequence number
+                    seqNum++;
+                }
+            } //2. SOMEWHAT FULL WINDOW Scenario 2: Some pax were dropped, which means window still has some pax. e.g. 1,2,3. START @ 4
+            else if (seqNum == pax) {
+
+                for (int i = packetsContainer.size() + 1; i <= window; i++) {
+                    //Create the packets to send
+                    Packet packet = new Packet(1, seqNum, 5, seqNum);
+                    //Add those packets to the container (window)
+                    packetsContainer.add(packet);
+                    //System.out.println("Packet created for " + i);
+                    
+                    writer.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
+                    //Increase the sequence number
+                    seqNum++;
+                }
+
+            } else if (seqNum > pax) {
+                System.out.println("The seqNum is greater than MAX so don't send anymore!");
+                writer.println(timeStamp()+": "+"The seqNum is greater than MAX so don't send anymore!");
+                
             }
-            else{
-            
+
+            //Send those packets
+            sendPackets(packetsContainer);
+        //Send those pax
+
+            //go into receiveMode
+            sendMode = false;
+        } else {
+            //System.out.println("seqNum " + seqNum);
+            if (seqNum > pax) {
+                writer.println(timeStamp()+": "+"seqNum > MAX, CEASE sending.");
+                writer.println(timeStamp()+": "+"# of pax in container: " + packetsContainer.size());
+
+                //If there's still pax in the container, keep resending till they get through
+                if (packetsContainer.size() > 0) {
+                    sendPackets(packetsContainer);
+                } else {
+                    System.out.println("\n **********END OF SESSION***************\n");
+                    //System.out.println("Packets container is size " + packetsContainer.size());
+                    //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
+                    //System.out.println("Check this, PAX #" + pax);
+                    //System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
+                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
+                    writer.close();
+                }
+            } else {
+                System.out.println("seqNum @ max, LASTPACKET SCENARIO");
+
+                //EMPTY window scenario
+                if (packetsContainer.size() == 0) {
+                    try {
+                        Packet packet = new Packet(3, seqNum, 5, seqNum);
+                        DatagramSocket sendSocket = new DatagramSocket();
+                        HostA.sendPacket(packet, sendSocket);
+                        sendSocket.close();
+                        System.out.println("EOT packet SENT!");
+                        writer.println(timeStamp()+": "+"**EOT PACKET SENT!**");
+                    } catch (SocketException ex) {
+                        Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } //SOMEWHATFUL window scenario
+                else {
+                    //Create the packets to send
+                    Packet packet = new Packet(3, seqNum, 5, seqNum);
+                    //Add those packets to the container (window)
+                    packetsContainer.add(packet);
+                    //System.out.println("Packet created for " + i);
+                    System.out.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
+
+                    HostA.sendPackets(packetsContainer);
+
+                }
             }
         }
-        
-        sendPackets(WINDOW);
-        sendMode = false;
-        RECEIVE();
-        
     }
     // Check if this is the last seqNum
     public static void checkLast(){
@@ -278,17 +343,17 @@ public class HostA {
             System.out.println("SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
                 writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
         } catch (SocketException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
 
     public static void RECEIVE() {
-        
+
         try {
-            System.out.println("STARTING RECEIVE()");
+            System.out.println("Inside receive()");
             byte[] receiveData = new byte[90];
             System.out.println("socket created, waiting to receive");
             DatagramSocket listenSocket = new DatagramSocket(listenPort);
@@ -308,9 +373,9 @@ public class HostA {
                     System.out.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
                     writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
 
-                    removeInTotal(packet.getSeqNum());
+                    removeInWindow(packet.getSeqNum());
 
-                    //checkArray();
+                    checkArray();
 
                 } catch (IOException ex) {
                     Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
@@ -360,28 +425,26 @@ public class HostA {
                     
 
                 } catch (IOException ex) {
-                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } catch (SocketException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
 
-    public static void setLoss() {
+    
 
-    }
-
-    public static void removeInTotal(int sequenceNum) {
+    public static void removeInWindow(int sequenceNum) {
 
         //remove from window 
-        for (int i = 0; i < remainingPacketsContainer.size(); i++) {
-            if (remainingPacketsContainer.get(i).getSeqNum() == sequenceNum) {
+        for (int i = 0; i < packetsContainer.size(); i++) {
+            if (packetsContainer.get(i).getSeqNum() == sequenceNum) {
                 ackedPacketsContainer.add(packetsContainer.get(i));
-                remainingPacketsContainer.remove(i);
+                packetsContainer.remove(i);
 
             }
         }
