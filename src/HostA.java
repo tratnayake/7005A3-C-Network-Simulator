@@ -63,7 +63,7 @@ public class HostA {
     public static void main(String args[]) throws Exception {
         
         Config config = new Config();
-        timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+        
         
         controlPort = Integer.parseInt(config.getProp().getProperty("aControlPort"));
         
@@ -73,7 +73,7 @@ public class HostA {
         listenPort = Integer.parseInt(config.getProp().getProperty("hostAlistenPort"));
         
          writer = new PrintWriter("HostAlog.txt","UTF-8");
-         writer.println("TEST");
+         
          
          System.out.println("FInished writing");
         //END CHANGES
@@ -92,13 +92,13 @@ public class HostA {
         String networkAddress = config.getProp().getProperty("hostAToNet");
         networkAddr = InetAddress.getByName(networkAddress);
         System.out.println("IP for network is "+networkAddr);
-        writer.println(timeStamp+": "+"IP for network is "+networkAddr);
+        writer.println(timeStamp()+": "+"IP for network is "+networkAddr);
 
         //New socket purely meant for listening to commands from NET
         DatagramSocket commandSocket = new DatagramSocket(controlPort);
         int startCommand = listenForCommand(commandSocket);
         System.out.println("Start Command is " + startCommand);
-        writer.println(timeStamp+": "+"Start Command is " + startCommand);
+        writer.println(timeStamp()+": "+"Start Command is " + startCommand);
 
         //Create new packetsContainer to hold packets (this is essentially our window)
         packetsContainer = new ArrayList<>();
@@ -108,11 +108,11 @@ public class HostA {
         if (startCommand == 1) {
             sendMode = true;
             System.out.println("Go into SENDER mode");
-            writer.println(timeStamp+": "+"Go into SENDER mode");
+            writer.println(timeStamp()+": "+"Go into SENDER mode");
         } else {
             sendMode = false;
             System.out.println("Go into RECEIVER mode");
-            writer.println(timeStamp+": "+"Go into RECEIVER mode");
+            writer.println(timeStamp()+": "+"Go into RECEIVER mode");
             RECEIVEACK();
         }
 
@@ -134,13 +134,13 @@ public class HostA {
         while (true) {
             try {
                 System.out.println("Host A waiting for a command from NETWORK....");
-                writer.println(timeStamp+": "+"Host A waiting for a command from NETWORK....");
+                writer.println(timeStamp()+": "+"Host A waiting for a command from NETWORK....");
                 DatagramPacket receiveCommandPacket = new DatagramPacket(receiveCommandContainer, receiveCommandContainer.length);
                 commandSocket.receive(receiveCommandPacket);
                 String receivedCommand = new String(receiveCommandPacket.getData());
                 receivedCommand = receivedCommand.trim();
                 System.out.println("RECEIVED NESSAGE FROM NETWORK: " + receivedCommand);
-                writer.println(timeStamp+": "+"RECEIVED NESSAGE FROM NETWORK: " + receivedCommand);
+                writer.println(timeStamp()+": "+"RECEIVED NESSAGE FROM NETWORK: " + receivedCommand);
                 command = Integer.valueOf(receivedCommand);
                 break;
             } catch (IOException ex) {
@@ -164,7 +164,7 @@ public class HostA {
                     packetsContainer.add(packet);
                     //System.out.println("Packet created for " + i);
                     
-                    writer.println(timeStamp+": "+"Packet #" + packet.getSeqNum() + " added to container");
+                    writer.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
                     //Increase the sequence number
                     seqNum++;
                 }
@@ -178,14 +178,14 @@ public class HostA {
                     packetsContainer.add(packet);
                     //System.out.println("Packet created for " + i);
                     
-                    writer.println(timeStamp+": "+"Packet #" + packet.getSeqNum() + " added to container");
+                    writer.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
                     //Increase the sequence number
                     seqNum++;
                 }
 
             } else if (seqNum > pax) {
                 System.out.println("The seqNum is greater than MAX so don't send anymore!");
-                writer.println(timeStamp+": "+"The seqNum is greater than MAX so don't send anymore!");
+                writer.println(timeStamp()+": "+"The seqNum is greater than MAX so don't send anymore!");
                 
             }
 
@@ -198,8 +198,8 @@ public class HostA {
         } else {
             //System.out.println("seqNum " + seqNum);
             if (seqNum > pax) {
-                writer.println(timeStamp+": "+"seqNum > MAX, CEASE sending.");
-                writer.println(timeStamp+": "+"# of pax in container: " + packetsContainer.size());
+                writer.println(timeStamp()+": "+"seqNum > MAX, CEASE sending.");
+                writer.println(timeStamp()+": "+"# of pax in container: " + packetsContainer.size());
 
                 //If there's still pax in the container, keep resending till they get through
                 if (packetsContainer.size() > 0) {
@@ -210,7 +210,7 @@ public class HostA {
                     //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
                     //System.out.println("Check this, PAX #" + pax);
                     //System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
-                    writer.println(timeStamp+": "+"\n *********END OF SESSION COMPLETE******** \n");
+                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
                     writer.close();
                 }
             } else {
@@ -224,7 +224,7 @@ public class HostA {
                         HostA.sendPacket(packet, sendSocket);
                         sendSocket.close();
                         System.out.println("EOT packet SENT!");
-                        writer.println(timeStamp+": "+"**EOT PACKET SENT!**");
+                        writer.println(timeStamp()+": "+"**EOT PACKET SENT!**");
                     } catch (SocketException ex) {
                         Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -235,7 +235,7 @@ public class HostA {
                     //Add those packets to the container (window)
                     packetsContainer.add(packet);
                     //System.out.println("Packet created for " + i);
-                    System.out.println(timeStamp+": "+"Packet #" + packet.getSeqNum() + " added to container");
+                    System.out.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
 
                     HostA.sendPackets(packetsContainer);
 
@@ -266,12 +266,15 @@ public class HostA {
                 //Check if EOT
                 if (packetObj.getSeqNum() == pax) {
                     packetObj.setPacketType(3);
+                    writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
+                writer.println("--EOT HAS BEEN SENT BACK, CLOSING LOG --");
+                    writer.close();
                 }
                 sendData = prepPacket(packetObj);
                 DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, networkAddr, networkPort);
                 sendSocket.send(sendPacket);
                 System.out.println("SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
-                writer.println(timeStamp+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
+                writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
             }
 
             timer = new Timer();
@@ -279,7 +282,7 @@ public class HostA {
             }, timeOutLength);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed \n\n");
-            writer.println(timeStamp+": "+"Last packet in current window SENT. TIMER STARTED\n\n");
+            writer.println(timeStamp()+": "+"Last packet in current window SENT. TIMER STARTED\n\n");
         } catch (SocketException ex) {
             Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -294,12 +297,15 @@ public class HostA {
             if (packetObj.getSeqNum() == pax) {
                 //set type to EOT
                 packetObj.setPacketType(3);
+                writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
+                writer.println("--EOT HAS BEEN SENT BACK, CLOSING LOG --");
+                    writer.close();
             }
             sendData = prepPacket(packetObj);
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, networkAddr, networkPort);
             sendSocket.send(sendPacket);
             System.out.println("SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
-                writer.println(timeStamp+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
+                writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
         } catch (SocketException ex) {
             Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -380,6 +386,7 @@ public class HostA {
                     DatagramSocket sendSocket = new DatagramSocket();
                     sendPacket(packet, sendSocket);
                     sendSocket.close();
+                    
 
                 } catch (IOException ex) {
                     Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
@@ -416,7 +423,7 @@ public class HostA {
             timer.cancel();
             timer.purge();
             System.out.println("Array empty. All Pax arrived. Timer Stop");
-            writer.println(timeStamp+": "+"Array empty. All Pax arrived. Timer Stop");
+            writer.println(timeStamp()+": "+"Array empty. All Pax arrived. Timer Stop");
             postConversation();
         }
     }
@@ -433,18 +440,18 @@ public class HostA {
     public static void postConversation() {
         try {
             System.out.println("\n POST TRANSMISSION STATS");
-            writer.println(timeStamp+": "+"POST TRANSMISSION STATS \n");
+            writer.println(timeStamp()+": "+"POST TRANSMISSION STATS \n");
             System.out.println("LAST TRANSMISSION WINDOW SIZE:" + window);
-            writer.println(timeStamp+": "+"LAST TRANSMISSION WINDOW SIZE:" + window);
+            writer.println(timeStamp()+": "+"LAST TRANSMISSION WINDOW SIZE:" + window);
             System.out.println(HostA.packetsContainer.size() + "PACKETS LOST");
-            writer.println(timeStamp+": "+HostA.packetsContainer.size() + "PACKETS LOST");
+            writer.println(timeStamp()+": "+HostA.packetsContainer.size() + "PACKETS LOST");
             int success = window - packetsContainer.size();
             System.out.println(success+"/"+window+"packets received successfully");
-             writer.println(timeStamp+": "+success+"/"+window+"packets received successfully");
+             writer.println(timeStamp()+": "+success+"/"+window+"packets received successfully");
             System.out.println("Pausing for 5 seconds before sending again");
-            writer.println(timeStamp+": "+"Pausing for 5 seconds before sending again");
+            writer.println(timeStamp()+": "+"Pausing for 5 seconds before sending again");
             Thread.sleep(5000);
-           writer.println(timeStamp+": "+"Sleep Finished! sending again");
+           writer.println(timeStamp()+": "+"Sleep Finished! sending again");
             sendMode = true;
             HostA.SEND();
 
@@ -470,6 +477,10 @@ public class HostA {
   
   return type;
   }
+    
+    public static String timeStamp(){
+        return timeStamp = new SimpleDateFormat("yyyy,MM,dd_HH:mm:ss").format(Calendar.getInstance().getTime());
+    }
 
 }
 
