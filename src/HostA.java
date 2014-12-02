@@ -72,7 +72,7 @@ public class HostA {
 
         listenPort = Integer.parseInt(config.getProp().getProperty("hostAlistenPort"));
         
-         writer = new PrintWriter("HostAlog.txt","UTF-8");
+         writer = new PrintWriter("HostAjlog.txt","UTF-8");
          
          
          System.out.println("FInished writing");
