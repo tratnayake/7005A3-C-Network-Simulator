@@ -19,8 +19,8 @@ public class Network {
     public static InetAddress HostAaddr;
     public static InetAddress HostBaddr;
     public static String controlMessage;
-    public static int aControlPort = 5004;
-    public static int bControlPort = 5005;
+    public static int aControlPort;
+    public static int bControlPort;
     public static InetAddress hostA;
     public static InetAddress hostB;
     public static Config config;
@@ -33,10 +33,14 @@ public class Network {
 
     public static void main(String args[]) throws Exception {
         
-        timer = Integer.parseInt(config.getProp().getProperty("delay"));
+        
         Scanner scan = new Scanner(System.in);
         config = new Config();
 
+        timer = Integer.parseInt(config.getProp().getProperty("delay"));
+        aControlPort = Integer.parseInt(config.getProp().getProperty("aControlPort"));
+        bControlPort = Integer.parseInt(config.getProp().getProperty("bControlPort"));
+        
         System.out.println("There are two hosts available for this simulation. Please choose which Host you would like to send from?");
         System.out.println("*NOTE* The host that isn't provided will be the receiver");
         
@@ -64,9 +68,9 @@ public class Network {
     }
 
         System.out.println("Note that this is the percentage of drop rate for each packet");
-        System.out.println("How many packets would you like to drop?");
+        System.out.println("What percentage of packets would you like to drop?");
         int bitErr = scan.nextInt();
-        System.out.println("You have chosen to drop " + bitErr + " packets");
+        System.out.println("You have chosen to drop " + bitErr + "% packets");
         sendControlSignal(controlMessage);
         System.out.println("Control messages sent to hosts \n BEGIN!");
         

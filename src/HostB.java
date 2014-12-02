@@ -3,7 +3,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
 import java.net.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.Timer;
@@ -51,30 +53,52 @@ public class HostB {
     public static long timeOutLength;
 
     public static ArrayList<Packet> ackedPacketsContainer;
+    
+    public static PrintWriter writer;
+    
+    public static String timeStamp;
 
+    public static int controlPort;
+    
     public static void main(String args[]) throws Exception {
+        
         Config config = new Config();
+        timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
+        
+        controlPort = Integer.parseInt(config.getProp().getProperty("bControlPort"));
+        
+        //CHANGE THESE FOR EVERY NEW HOST
+        networkPort = Integer.parseInt(config.getProp().getProperty("hostBnetworkPort"));
+
+        listenPort = Integer.parseInt(config.getProp().getProperty("hostBlistenPort"));
+        
+         writer = new PrintWriter("HostBlog.txt","UTF-8");
+         writer.println("TEST");
+         
+         System.out.println("FInished writing");
+        //END CHANGES
+        
+        networkAddr = InetAddress.getByName("localhost");
         
         pax = Integer.parseInt(config.getProp().getProperty("pacs"));
         window = Integer.parseInt(config.getProp().getProperty("windowsize"));
         //START SEQUENCE NUMBERS FROM 1!
         seqNum = Integer.parseInt(config.getProp().getProperty("sequenceNum"));
 
-        networkAddr = InetAddress.getByName("localhost");
-        networkPort = 7006;
-
-        listenPort = 8005;
+        
 
         timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 3;
         
-        String networkAddress = config.getProp().getProperty("hostBToNet");
+        String networkAddress = config.getProp().getProperty("hostAToNet");
         networkAddr = InetAddress.getByName(networkAddress);
         System.out.println("IP for network is "+networkAddr);
+        writer.println(timeStamp+": "+"IP for network is "+networkAddr);
 
         //New socket purely meant for listening to commands from NET
-        DatagramSocket commandSocket = new DatagramSocket(5005);
+        DatagramSocket commandSocket = new DatagramSocket(controlPort);
         int startCommand = listenForCommand(commandSocket);
         System.out.println("Start Command is " + startCommand);
+        writer.println(timeStamp+": "+"Start Command is " + startCommand);
 
         //Create new packetsContainer to hold packets (this is essentially our window)
         packetsContainer = new ArrayList<>();
@@ -84,9 +108,11 @@ public class HostB {
         if (startCommand == 1) {
             sendMode = true;
             System.out.println("Go into SENDER mode");
+            writer.println(timeStamp+": "+"Go into SENDER mode");
         } else {
             sendMode = false;
             System.out.println("Go into RECEIVER mode");
+            writer.println(timeStamp+": "+"Go into RECEIVER mode");
             RECEIVEACK();
         }
 
@@ -108,15 +134,17 @@ public class HostB {
         while (true) {
             try {
                 System.out.println("Host A waiting for a command from NETWORK....");
+                writer.println(timeStamp+": "+"Host A waiting for a command from NETWORK....");
                 DatagramPacket receiveCommandPacket = new DatagramPacket(receiveCommandContainer, receiveCommandContainer.length);
                 commandSocket.receive(receiveCommandPacket);
                 String receivedCommand = new String(receiveCommandPacket.getData());
                 receivedCommand = receivedCommand.trim();
                 System.out.println("RECEIVED NESSAGE FROM NETWORK: " + receivedCommand);
+                writer.println(timeStamp+": "+"RECEIVED NESSAGE FROM NETWORK: " + receivedCommand);
                 command = Integer.valueOf(receivedCommand);
                 break;
             } catch (IOException ex) {
-                Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -135,7 +163,8 @@ public class HostB {
                     //Add those packets to the container (window)
                     packetsContainer.add(packet);
                     //System.out.println("Packet created for " + i);
-                    System.out.println("Packet #" + packet.getSeqNum() + " added to container");
+                    
+                    writer.println(timeStamp+": "+"Packet #" + packet.getSeqNum() + " added to container");
                     //Increase the sequence number
                     seqNum++;
                 }
@@ -148,13 +177,16 @@ public class HostB {
                     //Add those packets to the container (window)
                     packetsContainer.add(packet);
                     //System.out.println("Packet created for " + i);
-                    System.out.println("Packet #" + packet.getSeqNum() + " added to container");
+                    
+                    writer.println(timeStamp+": "+"Packet #" + packet.getSeqNum() + " added to container");
                     //Increase the sequence number
                     seqNum++;
                 }
 
             } else if (seqNum > pax) {
                 System.out.println("The seqNum is greater than MAX so don't send anymore!");
+                writer.println(timeStamp+": "+"The seqNum is greater than MAX so don't send anymore!");
+                
             }
 
             //Send those packets
@@ -164,19 +196,22 @@ public class HostB {
             //go into receiveMode
             sendMode = false;
         } else {
-            System.out.println("seqNum " + seqNum);
+            //System.out.println("seqNum " + seqNum);
             if (seqNum > pax) {
-                System.out.println("The seqNum is greater than MAX so don't send anymore!");
-                System.out.println("Num of pax still in container " + packetsContainer.size());
+                writer.println(timeStamp+": "+"seqNum > MAX, CEASE sending.");
+                writer.println(timeStamp+": "+"# of pax in container: " + packetsContainer.size());
 
                 //If there's still pax in the container, keep resending till they get through
                 if (packetsContainer.size() > 0) {
                     sendPackets(packetsContainer);
                 } else {
-                    System.out.println("Packets container is size " + packetsContainer.size());
-                    System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
-                    System.out.println("Check this, PAX #" + pax);
-                    System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
+                    System.out.println("\n **********END OF SESSION***************\n");
+                    //System.out.println("Packets container is size " + packetsContainer.size());
+                    //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
+                    //System.out.println("Check this, PAX #" + pax);
+                    //System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
+                    writer.println(timeStamp+": "+"\n *********END OF SESSION COMPLETE******** \n");
+                    writer.close();
                 }
             } else {
                 System.out.println("seqNum @ max, LASTPACKET SCENARIO");
@@ -186,11 +221,12 @@ public class HostB {
                     try {
                         Packet packet = new Packet(3, seqNum, 5, seqNum);
                         DatagramSocket sendSocket = new DatagramSocket();
-                        HostB.sendPacket(packet, sendSocket);
+                        HostA.sendPacket(packet, sendSocket);
                         sendSocket.close();
                         System.out.println("EOT packet SENT!");
+                        writer.println(timeStamp+": "+"**EOT PACKET SENT!**");
                     } catch (SocketException ex) {
-                        Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } //SOMEWHATFUL window scenario
                 else {
@@ -199,9 +235,9 @@ public class HostB {
                     //Add those packets to the container (window)
                     packetsContainer.add(packet);
                     //System.out.println("Packet created for " + i);
-                    System.out.println("Packet #" + packet.getSeqNum() + " added to container");
+                    System.out.println(timeStamp+": "+"Packet #" + packet.getSeqNum() + " added to container");
 
-                    HostB.sendPackets(packetsContainer);
+                    HostA.sendPackets(packetsContainer);
 
                 }
             }
@@ -216,11 +252,9 @@ public class HostB {
             os = new ObjectOutputStream(outputStream);
             os.writeObject(packet);
         } catch (IOException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        
-        
         return outputStream.toByteArray();
     }
 
@@ -236,18 +270,20 @@ public class HostB {
                 sendData = prepPacket(packetObj);
                 DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, networkAddr, networkPort);
                 sendSocket.send(sendPacket);
-                System.out.println("Packet #" + packetObj.getSeqNum() + " SENT!");
+                System.out.println("SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
+                writer.println(timeStamp+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
             }
 
             timer = new Timer();
-            timer.schedule(new timeOut("B") {
+            timer.schedule(new timeOut("A") {
             }, timeOutLength);
             sendSocket.close();
-            System.out.println("Last pax sent, timer created, socket closed");
+            System.out.println("Last pax sent, timer created, socket closed \n\n");
+            writer.println(timeStamp+": "+"Last packet in current window SENT. TIMER STARTED\n\n");
         } catch (SocketException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -262,7 +298,8 @@ public class HostB {
             sendData = prepPacket(packetObj);
             DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, networkAddr, networkPort);
             sendSocket.send(sendPacket);
-            System.out.println("Packet #" + packetObj.getSeqNum() + " SENT!");
+            System.out.println("SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
+                writer.println(timeStamp+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
         } catch (SocketException ex) {
             Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
@@ -275,7 +312,7 @@ public class HostB {
 
         try {
             System.out.println("Inside receive()");
-            byte[] receiveData = new byte[1024];
+            byte[] receiveData = new byte[90];
             System.out.println("socket created, waiting to receive");
             DatagramSocket listenSocket = new DatagramSocket(listenPort);
             while (true) {
@@ -291,20 +328,21 @@ public class HostB {
 
                     Packet packet = (Packet) is.readObject();
 
-                    System.out.println("RECEIVED PACKET " + packet.getSeqNum());
+                    System.out.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
+                    writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
 
                     removeInWindow(packet.getSeqNum());
 
                     checkArray();
 
                 } catch (IOException ex) {
-                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } catch (SocketException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -313,7 +351,7 @@ public class HostB {
         System.out.println("IN RECEIVE MODE");
         try {
             System.out.println("Inside receiveAck");
-            byte[] receiveData = new byte[1024];
+            byte[] receiveData = new byte[90];
             System.out.println("socket created, waiting to receive");
             DatagramSocket listenSocket = new DatagramSocket(listenPort);
             while (true) {
@@ -329,7 +367,8 @@ public class HostB {
 
                     Packet packet = (Packet) is.readObject();
 
-                    System.out.println("RECEIVED PACKET " + packet.getSeqNum());
+                    System.out.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
+                    writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
 
                     //If the packet is not an EOT, 
                     if (packet.getPacketType() != 3) {
@@ -377,6 +416,7 @@ public class HostB {
             timer.cancel();
             timer.purge();
             System.out.println("Array empty. All Pax arrived. Timer Stop");
+            writer.println(timeStamp+": "+"Array empty. All Pax arrived. Timer Stop");
             postConversation();
         }
     }
@@ -392,23 +432,44 @@ public class HostB {
 
     public static void postConversation() {
         try {
-            System.out.println("For that last transmission, window size was " + window);
-            System.out.println(HostB.packetsContainer.size() + "PAX LOST");
+            System.out.println("\n POST TRANSMISSION STATS");
+            writer.println(timeStamp+": "+"POST TRANSMISSION STATS \n");
+            System.out.println("LAST TRANSMISSION WINDOW SIZE:" + window);
+            writer.println(timeStamp+": "+"LAST TRANSMISSION WINDOW SIZE:" + window);
+            System.out.println(HostA.packetsContainer.size() + "PACKETS LOST");
+            writer.println(timeStamp+": "+HostA.packetsContainer.size() + "PACKETS LOST");
             int success = window - packetsContainer.size();
-            float successRate = success / window;
-            System.out.println("Success rate is " + (successRate * 100) + "%");
-            System.out.println("Sleeping for 5 seconds");
+            System.out.println(success+"/"+window+"packets received successfully");
+             writer.println(timeStamp+": "+success+"/"+window+"packets received successfully");
+            System.out.println("Pausing for 5 seconds before sending again");
+            writer.println(timeStamp+": "+"Pausing for 5 seconds before sending again");
             Thread.sleep(5000);
-            System.out.println("Sleep Finished! sending again");
+           writer.println(timeStamp+": "+"Sleep Finished! sending again");
             sendMode = true;
-            HostB.SEND();
+            HostA.SEND();
 
         } catch (InterruptedException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    
+    public static String paxType(int packetType){
+      String type = null;
+  switch (packetType){
+      case 1: type = "PSH";
+                break;
+      case 2: type = "ACK";
+                break;
+      case 3: type = "EOT";
+              break;
+      case 4: type = "LOSS";
+              break;  
+  }
+  
+  return type;
+  }
 
 }
 
