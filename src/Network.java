@@ -30,10 +30,14 @@ public class Network {
     public static int hostBDSTPort; 
     public static int timer;
             
-
+    
+    /*
+    *Asks the user to input which use will be the sender
+    *Sends the user input to the method sendControlSignal and let that method handle it
+    *Creatse a thread for each host to use
+    */
     public static void main(String args[]) throws Exception {
-        
-        
+
         Scanner scan = new Scanner(System.in);
         config = new Config();
 
@@ -100,6 +104,9 @@ public class Network {
         
     }
     
+    /*
+    *Sends the command to each hosts to tell them whether they are a sender or receiver
+    */
     public static void sendControlSignal(String sender){
 
         try {
@@ -144,6 +151,9 @@ public class Network {
     }
 }
 
+/*
+*Creates the threads for both Host A and Hos B
+*/
 class HostThread implements Runnable {
     
    private Thread t;
@@ -162,6 +172,13 @@ class HostThread implements Runnable {
        
        System.out.println(name + "instantiated" );
    }
+   
+   /*
+   *Creates random number generatr to randomly drop packets
+   *Creates sockets for inbound and outbound packets
+   *Receive packet from whatever is in the inbound socket and evaluate whether to drop it or not
+   *Send it to the outbound socket
+   */
    public void run() {
        
         Random randomNum = new Random();
@@ -240,6 +257,9 @@ class HostThread implements Runnable {
         }
    }
    
+  /*
+   *Changes the packet type from number to words for readability
+   */
   public static String paxType(int packetType){
       String type = null;
   switch (packetType){

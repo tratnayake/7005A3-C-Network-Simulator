@@ -5,9 +5,14 @@ abstract class timeOut extends TimerTask {
     
     public String Host;
 
+    //check for host
        public timeOut(String Host){
            this.Host = Host;
        }
+       /*
+       *Timeout if host is A
+       *Timeout if host is B
+       */
     public void run() {
         System.out.println("TIME OUT FOR HOST " +Host);
         

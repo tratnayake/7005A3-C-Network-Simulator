@@ -14,6 +14,9 @@ public class Config {
     
     private Properties prop;
     
+    /*
+    *Config method that inputs the config.properties file to be used for the parameters in the different classes 
+    */
     public Config() throws Exception
     {
     prop = new Properties();
