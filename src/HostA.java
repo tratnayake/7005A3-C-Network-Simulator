@@ -108,7 +108,7 @@ public class HostA {
         
         remainingPacketsContainer = new ArrayList<>();
         //POPULATE A 100 PACKETS INTO THE ARRAY LIST
-        for(int i = 1; i < 100; i ++){
+        for(int i = 1; i < pax; i ++){
            Packet packet = new Packet (1,i,window,i);
            remainingPacketsContainer.add(packet);
         }
