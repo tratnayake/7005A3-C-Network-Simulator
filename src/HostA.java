@@ -112,6 +112,7 @@ public class HostA {
            Packet packet = new Packet (1,i,window,i);
            remainingPacketsContainer.add(packet);
         }
+        System.out.println(packetsContainer.size()+ "packets created");
         
         packetsContainer = new ArrayList<>();
 
@@ -165,54 +166,27 @@ public class HostA {
 
     public static void SEND(){
         
-        //Scenario 1 = BRAND NEW. Nothing inaarray
-       if (packetsContainer.isEmpty()){
-           System.out.println("Scenario 1");
-           for (int i = 1; i <= window; i ++){
-               //ONly if there is next element (if stuff left to send is not empty)
-               System.out.println("More packets left to grab");
-               if (!remainingPacketsContainer.isEmpty()){
-                    //Grab from the remaining packets container
-                    packetsContainer.add(remainingPacketsContainer.get(i));
-                    //delete from the reamining packets Ccontainer
-                    remainingPacketsContainer.remove(i);
+        //FIll the window
+        for (int i = 1; i <= 5 ; i++){
+            packetsContainer.add(remainingPacketsContainer.get(i));
+            System.out.println("Window "+i+ "filled");
+            
+        }
+        
+        for (int i = 0; i < packetsContainer.size(); i++) {
+            //if the next packet in total is an EOT 
+            if(remainingPacketsContainer.get(i).getPacketType() == 3){
+                if(remainingPacketsContainer.size() == 1){
+                    sendEOT();
                 } 
-               //array is empty and there is NOTHING left to send
-               else {
-                   System.out.println("No packets left to grab, go to EOT");
-                   //SEND THAT EOT
-                   sendEOT();
-               }
-           }
-       }
-       else{
-           //Scenario 2: Stuff still in array because packets not ACKED
-           System.out.println("Scenario 2");
-           for (int i = packetsContainer.size() +1; i < window; i++){
-               // Only if there is still stuff to add
-               System.out.println("There is still stuff to send");
-               if (!remainingPacketsContainer.isEmpty()){
-                   System.out.println("If there's sill stuf to grab");
-                    //Grab from the remaining packets container
-                    packetsContainer.add(remainingPacketsContainer.get(i));
-                    //delete from the reamining packets Ccontainer
-                    remainingPacketsContainer.remove(i);
-                }
-               else{
-                   // Stuff still in array, but is empty
-                   System.out.println("STuff still in array but to grab is is empty, go down to sendPackets");
-               }
-           }
-       }
-       
-       if(!packetsContainer.isEmpty()){
-       sendPackets(packetsContainer);
-       sendMode = false;
-       }
-       else{
-           System.out.println("Nothing left to send");
-       }
-   
+            }
+            else{
+            sendPackets(packetsContainer);
+            }
+        }
+        
+        
+        
     }
     // Check if this is the last seqNum
     public static void checkLast(){
@@ -330,9 +304,9 @@ public class HostA {
                     System.out.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
                     writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
 
-                    removeInWindow(packet.getSeqNum());
+                    removeInTotal(packet.getSeqNum());
 
-                    checkArray();
+                    //checkArray();
 
                 } catch (IOException ex) {
                     Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
@@ -397,13 +371,13 @@ public class HostA {
 
     }
 
-    public static void removeInWindow(int sequenceNum) {
+    public static void removeInTotal(int sequenceNum) {
 
         //remove from window 
-        for (int i = 0; i < packetsContainer.size(); i++) {
-            if (packetsContainer.get(i).getSeqNum() == sequenceNum) {
+        for (int i = 0; i < remainingPacketsContainer.size(); i++) {
+            if (remainingPacketsContainer.get(i).getSeqNum() == sequenceNum) {
                 ackedPacketsContainer.add(packetsContainer.get(i));
-                packetsContainer.remove(i);
+                remainingPacketsContainer.remove(i);
 
             }
         }
