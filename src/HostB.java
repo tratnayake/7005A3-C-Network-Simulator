@@ -89,7 +89,7 @@ public class HostB {
 
         timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 3;
         
-        String networkAddress = config.getProp().getProperty("hostAToNet");
+        String networkAddress = config.getProp().getProperty("hostBToNet");
         networkAddr = InetAddress.getByName(networkAddress);
         System.out.println("IP for network is "+networkAddr);
         writer.println(timeStamp()+": "+"IP for network is "+networkAddr);
@@ -144,7 +144,7 @@ public class HostB {
                 command = Integer.valueOf(receivedCommand);
                 break;
             } catch (IOException ex) {
-                Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
@@ -221,12 +221,12 @@ public class HostB {
                     try {
                         Packet packet = new Packet(3, seqNum, 5, seqNum);
                         DatagramSocket sendSocket = new DatagramSocket();
-                        HostA.sendPacket(packet, sendSocket);
+                        HostB.sendPacket(packet, sendSocket);
                         sendSocket.close();
                         System.out.println("EOT packet SENT!");
                         writer.println(timeStamp()+": "+"**EOT PACKET SENT!**");
                     } catch (SocketException ex) {
-                        Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } //SOMEWHATFUL window scenario
                 else {
@@ -237,7 +237,7 @@ public class HostB {
                     //System.out.println("Packet created for " + i);
                     System.out.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
 
-                    HostA.sendPackets(packetsContainer);
+                    HostB.sendPackets(packetsContainer);
 
                 }
             }
@@ -252,7 +252,7 @@ public class HostB {
             os = new ObjectOutputStream(outputStream);
             os.writeObject(packet);
         } catch (IOException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
         return outputStream.toByteArray();
@@ -278,15 +278,15 @@ public class HostB {
             }
 
             timer = new Timer();
-            timer.schedule(new timeOut("A") {
+            timer.schedule(new timeOut("B") {
             }, timeOutLength);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed \n\n");
             writer.println(timeStamp()+": "+"Last packet in current window SENT. TIMER STARTED\n\n");
         } catch (SocketException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -342,13 +342,13 @@ public class HostB {
                     checkArray();
 
                 } catch (IOException ex) {
-                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } catch (SocketException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -443,8 +443,8 @@ public class HostB {
             writer.println(timeStamp()+": "+"POST TRANSMISSION STATS \n");
             System.out.println("LAST TRANSMISSION WINDOW SIZE:" + window);
             writer.println(timeStamp()+": "+"LAST TRANSMISSION WINDOW SIZE:" + window);
-            System.out.println(HostA.packetsContainer.size() + "PACKETS LOST");
-            writer.println(timeStamp()+": "+HostA.packetsContainer.size() + "PACKETS LOST");
+            System.out.println(HostB.packetsContainer.size() + "PACKETS LOST");
+            writer.println(timeStamp()+": "+HostB.packetsContainer.size() + "PACKETS LOST");
             int success = window - packetsContainer.size();
             System.out.println(success+"/"+window+"packets received successfully");
              writer.println(timeStamp()+": "+success+"/"+window+"packets received successfully");
@@ -453,12 +453,12 @@ public class HostB {
             Thread.sleep(5000);
            writer.println(timeStamp()+": "+"Sleep Finished! sending again");
             sendMode = true;
-            HostA.SEND();
+            HostB.SEND();
 
         } catch (InterruptedException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     

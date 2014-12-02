@@ -72,7 +72,7 @@ public class HostA {
 
         listenPort = Integer.parseInt(config.getProp().getProperty("hostAlistenPort"));
         
-         writer = new PrintWriter("HostAjlog.txt","UTF-8");
+         writer = new PrintWriter("HostAlog.txt","UTF-8");
          
          
          System.out.println("FInished writing");
@@ -219,6 +219,7 @@ public class HostA {
                 //EMPTY window scenario
                 if (packetsContainer.size() == 0) {
                     try {
+                        System.out.println("WINDOW EMPTY. SEND OUT EOT");
                         Packet packet = new Packet(3, seqNum, 5, seqNum);
                         DatagramSocket sendSocket = new DatagramSocket();
                         HostA.sendPacket(packet, sendSocket);
@@ -230,12 +231,11 @@ public class HostA {
                     }
                 } //SOMEWHATFUL window scenario
                 else {
-                    //Create the packets to send
-                    Packet packet = new Packet(3, seqNum, 5, seqNum);
-                    //Add those packets to the container (window)
-                    packetsContainer.add(packet);
+                    
+                    
+                    System.out.println("WINDOW NOT EMPTY BEFORE EOT. PURGING EOT");
                     //System.out.println("Packet created for " + i);
-                    System.out.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
+                   
 
                     HostA.sendPackets(packetsContainer);
 
