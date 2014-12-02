@@ -213,7 +213,7 @@ public class HostA {
     // Check if this is the last seqNum
     public static void checkLast(){
         if (seqNum == pax){
-            
+            System.out.println("LAST!!");
             LAST();
             LAST = true;
             sendMode = false;
