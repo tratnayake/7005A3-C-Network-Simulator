@@ -183,11 +183,11 @@ public class HostA {
                 } 
             }
             else{
-            sendPackets(WINDOW);
+            
             }
         }
         
-        
+        sendPackets(WINDOW);
         sendMode = false;
         RECEIVE();
         
