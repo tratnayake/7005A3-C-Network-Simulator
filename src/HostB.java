@@ -294,9 +294,9 @@ public class HostB {
 
         try {
             //check if EOT
-            if (packetObj.getSeqNum() == pax) {
+            if (packetObj.getPacketType() == 5) {
                 //set type to EOT
-                packetObj.setPacketType(3);
+                packetObj.setPacketType(5);
                 writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
                 writer.println("--EOT HAS BEEN SENT BACK, CLOSING LOG --");
                     writer.close();
@@ -477,7 +477,10 @@ public class HostB {
       case 3: type = "EOT";
               break;
       case 4: type = "LOSS";
-              break;  
+              break;
+      case 5: type = "EOTACK";
+                break;
+          
   }
   
   return type;
