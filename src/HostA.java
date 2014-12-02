@@ -166,9 +166,11 @@ public class HostA {
 
     public static void SEND(){
         
+        ArrayList<Packet> WINDOW = new ArrayList<>();
+        
         //FIll the window
         for (int i = 1; i <= 5 ; i++){
-            packetsContainer.add(remainingPacketsContainer.get(i));
+            WINDOW.add(remainingPacketsContainer.get(i));
             System.out.println("Window "+i+ "filled");
             
         }
@@ -181,11 +183,13 @@ public class HostA {
                 } 
             }
             else{
-            sendPackets(packetsContainer);
+            sendPackets(WINDOW);
             }
         }
         
         
+        sendMode = false;
+        RECEIVE();
         
     }
     // Check if this is the last seqNum
