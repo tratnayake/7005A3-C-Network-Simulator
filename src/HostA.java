@@ -157,6 +157,7 @@ public class HostA {
         if (seqNum < pax) {
             //1. EMPTY WINDOW Scenario: Starting from seqNum 1 -> window, add a packet into packet Container
             if (packetsContainer.size() == 0) {
+                System.out.println("Point 1");
                 for (int i = 1; i <= window; i++) {
                     //Create the packets to send
                     Packet packet = new Packet(1, seqNum, 5, seqNum);
@@ -170,8 +171,10 @@ public class HostA {
                 }
             } //2. SOMEWHAT FULL WINDOW Scenario 2: Some pax were dropped, which means window still has some pax. e.g. 1,2,3. START @ 4
             else if (seqNum == pax) {
+                System.out.println("Point 2");
 
                 for (int i = packetsContainer.size() + 1; i <= window; i++) {
+                    System.out.println("Point 3");
                     //Create the packets to send
                     Packet packet = new Packet(1, seqNum, 5, seqNum);
                     //Add those packets to the container (window)
@@ -184,6 +187,7 @@ public class HostA {
                 }
 
             } else if (seqNum > pax) {
+                System.out.println("Point 4");
                 System.out.println("The seqNum is greater than MAX so don't send anymore!");
                 writer.println(timeStamp()+": "+"The seqNum is greater than MAX so don't send anymore!");
                 
@@ -196,6 +200,7 @@ public class HostA {
             //go into receiveMode
             sendMode = false;
         } else {
+            System.out.println("Point 5");
             //if sequence number is larger than max. IGNORE, This should never execute
             if (seqNum > pax) {
                 writer.println(timeStamp()+": "+"seqNum > MAX, CEASE sending.");
@@ -203,8 +208,10 @@ public class HostA {
 
                 //If there's still pax in the container, keep resending till they get through
                 if (packetsContainer.size() > 0) {
+                    System.out.println("Point 6");
                     sendPackets(packetsContainer);
                 } else {
+                    System.out.println("Point 7");
                     System.out.println("Before timer");
                     timer.cancel();
                     System.out.println("After Timer");
@@ -219,6 +226,7 @@ public class HostA {
             } 
             else if (seqNum == pax)//seqNum must be == to pax 
             {
+                System.out.println("Point 8");
                 //If there's nothing in the array, just send this packet and boom you're done.
                 if(packetsContainer.size() == 0){
                     System.out.println("seqNum is @ EOT packet, &array is empty");
@@ -236,6 +244,7 @@ public class HostA {
                 
                 else //sequenceNum @ EOT. Stuff still in array so purgeit, then send EOT
                 {
+                    System.out.println("Point 9");
                     sendPackets(packetsContainer);
                     sendMode = false;
                     
