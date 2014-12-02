@@ -379,8 +379,8 @@ public class HostB {
                     //If the packet is not an EOT, 
                     if (packet.getPacketType() != 3) {
 
-                        //Convert the packet into an ACK
-                        packet.setPacketType(2);
+                        //Convert the packet into an EOTACK
+                        packet.setPacketType(5);
                     }
 
                     DatagramSocket sendSocket = new DatagramSocket();

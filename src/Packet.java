@@ -13,7 +13,7 @@ import java.io.Serializable;
 public class Packet implements Serializable {
     
 
-    //1 = PSH 2=ACK 3=EOT 4=LOSS
+    //1 = PSH 2=ACK 3=EOT 4=LOSS 5=EOTACK
 
 
 

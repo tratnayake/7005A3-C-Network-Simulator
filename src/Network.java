@@ -199,9 +199,15 @@ class HostThread implements Runnable {
                         int randomInt = randomNum.nextInt(100) + 1;
                         if (randomInt <= drop)
                         {
-                            
+                            if(packet.getPacketType()==3 || packet.getPacketType()==5){
+                                System.out.println("This is an EOT or EOTACK");
+                                System.out.println("DO NOT DROP");
+                            }
+                            else{
                             System.out.println("\n\n**DROP PACKET "+packet.getSeqNum()+"**\n\n");    
                             continue;
+                            }
+
                             
                         }
                     }
@@ -230,7 +236,7 @@ class HostThread implements Runnable {
         }
         catch (IOException e)
         {
-            System.out.println("io exception");
+            System.out.println("io exception"); 
         }
    }
    
@@ -245,6 +251,8 @@ class HostThread implements Runnable {
               break;
       case 4: type = "LOSS";
               break;  
+      case 5: type = "EOTACK";
+              break;
   }
   
   return type;
