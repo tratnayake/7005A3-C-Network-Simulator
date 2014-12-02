@@ -1,3 +1,6 @@
+
+
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -221,12 +224,12 @@ public class HostB {
                     try {
                         Packet packet = new Packet(3, seqNum, 5, seqNum);
                         DatagramSocket sendSocket = new DatagramSocket();
-                        HostB.sendPacket(packet, sendSocket);
+                        HostA.sendPacket(packet, sendSocket);
                         sendSocket.close();
                         System.out.println("EOT packet SENT!");
                         writer.println(timeStamp()+": "+"**EOT PACKET SENT!**");
                     } catch (SocketException ex) {
-                        Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } //SOMEWHATFUL window scenario
                 else {
@@ -237,7 +240,7 @@ public class HostB {
                     //System.out.println("Packet created for " + i);
                     System.out.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
 
-                    HostB.sendPackets(packetsContainer);
+                    HostA.sendPackets(packetsContainer);
 
                 }
             }
@@ -315,6 +318,8 @@ public class HostB {
     }
 
     public static void RECEIVE() {
+        
+        
 
         try {
             System.out.println("Inside receive()");
@@ -336,19 +341,28 @@ public class HostB {
 
                     System.out.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
                     writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
+                    
+                    //check if EOT END STATE
+                            
 
                     removeInWindow(packet.getSeqNum());
 
+                        if (packet.getPacketType() ==5 && packetsContainer.isEmpty()) {
+                                System.out.println("\n **********END OF SESSION***************\n");
+                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
+                    writer.close();
+                                System.exit(seqNum);
+                            }
                     checkArray();
 
                 } catch (IOException ex) {
-                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } catch (SocketException ex) {
-            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }

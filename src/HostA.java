@@ -219,13 +219,12 @@ public class HostA {
                 if (packetsContainer.size() > 0) {
                     sendPackets(packetsContainer);
                 } else {
-                    System.out.println("\n **********END OF SESSION***************\n");
+                    
                     //System.out.println("Packets container is size " + packetsContainer.size());
                     //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
                     //System.out.println("Check this, PAX #" + pax);
                     //System.out.println("All ackec pax size = " + ackedPacketsContainer.size());
-                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
-                    writer.close();
+                    
                 }
             } else {
                 System.out.println("seqNum @ max, LASTPACKET SCENARIO");
@@ -315,7 +314,7 @@ public class HostA {
 
             timer = new Timer();
             timer.schedule(new timeOut("A") {
-            }, 2000);
+            }, timeOutLength);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed \n\n");
             writer.println(timeStamp()+": "+"Last packet in current window SENT. TIMER STARTED\n\n");
@@ -330,9 +329,9 @@ public class HostA {
 
         try {
             //check if EOT
-            if (packetObj.getSeqNum() == pax) {
+            if (packetObj.getPacketType() == 5) {
                 //set type to EOT
-                packetObj.setPacketType(3);
+                packetObj.setPacketType(5);
                 writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
                 writer.println("--EOT HAS BEEN SENT BACK, CLOSING LOG --");
                     writer.close();
@@ -343,9 +342,9 @@ public class HostA {
             System.out.println("SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
                 writer.println(timeStamp()+": "+"SENT | #"+packetObj.getSeqNum()+" | "+paxType(packetObj.getPacketType())+" TO NETWORK");
         } catch (SocketException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -381,7 +380,9 @@ public class HostA {
                     removeInWindow(packet.getSeqNum());
 
                         if (packet.getPacketType() ==5 && packetsContainer.isEmpty()) {
-                                System.out.println("YOU ARE DONE BECAUSE NOTHING LEFT IN CONTAINER");
+                                System.out.println("\n **********END OF SESSION***************\n");
+                    writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
+                    writer.close();
                                 System.exit(seqNum);
                             }
                     checkArray();
@@ -422,10 +423,15 @@ public class HostA {
                     writer.println("RCVD | #"+packet.getSeqNum()+" | "+paxType(packet.getPacketType()));
 
                     //If the packet is not an EOT, 
-                    if (packet.getPacketType() != 3) {
+                    if (packet.getPacketType() == 1) {
 
                         //Convert the packet into an ACK
                         packet.setPacketType(2);
+                    }
+                    else if (packet.getPacketType() == 3){
+                            System.out.println("GOT AN EOT, SETTING TO EOTACK");
+                            packet.setPacketType(5);
+                        
                     }
 
                     DatagramSocket sendSocket = new DatagramSocket();
@@ -434,13 +440,13 @@ public class HostA {
                     
 
                 } catch (IOException ex) {
-                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
         } catch (SocketException ex) {
-            Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(HostB.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -517,7 +523,9 @@ public class HostA {
       case 3: type = "EOT";
               break;
       case 4: type = "LOSS";
-              break;  
+              break;
+      case 5: type =  "EOTACK";
+                break;
   }
   
   return type;
