@@ -196,7 +196,7 @@ public class HostA {
             //go into receiveMode
             sendMode = false;
         } else {
-            //System.out.println("seqNum " + seqNum);
+            //if sequence number is larger than max. IGNORE, This should never execute
             if (seqNum > pax) {
                 writer.println(timeStamp()+": "+"seqNum > MAX, CEASE sending.");
                 writer.println(timeStamp()+": "+"# of pax in container: " + packetsContainer.size());
@@ -205,6 +205,9 @@ public class HostA {
                 if (packetsContainer.size() > 0) {
                     sendPackets(packetsContainer);
                 } else {
+                    System.out.println("Before timer");
+                    timer.cancel();
+                    System.out.println("After Timer");
                     System.out.println("\n **********END OF SESSION***************\n");
                     //System.out.println("Packets container is size " + packetsContainer.size());
                     //System.out.println("That means all PAX HAVE BEEN ACKED! BOOM !");
@@ -213,32 +216,29 @@ public class HostA {
                     writer.println(timeStamp()+": "+"\n *********END OF SESSION COMPLETE******** \n");
                     writer.close();
                 }
-            } else {
-                System.out.println("seqNum @ max, LASTPACKET SCENARIO");
-
-                //EMPTY window scenario
-                if (packetsContainer.size() == 0) {
+            } 
+            else if (seqNum == pax)//seqNum must be == to pax 
+            {
+                //If there's nothing in the array, just send this packet and boom you're done.
+                if(packetsContainer.size() == 0){
+                    System.out.println("seqNum is @ EOT packet, &array is empty");
                     try {
-                        System.out.println("WINDOW EMPTY. SEND OUT EOT");
-                        Packet packet = new Packet(3, seqNum, 5, seqNum);
+                        //Make the EOT
+                        Packet EOTpacket = new Packet (3, seqNum,5, seqNum);
                         DatagramSocket sendSocket = new DatagramSocket();
-                        HostA.sendPacket(packet, sendSocket);
+                        sendPacket(EOTpacket,sendSocket);
                         sendSocket.close();
-                        System.out.println("EOT packet SENT!");
-                        writer.println(timeStamp()+": "+"**EOT PACKET SENT!**");
                     } catch (SocketException ex) {
                         Logger.getLogger(HostA.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                } //SOMEWHATFUL window scenario
-                else {
                     
+                }
+                
+                else //sequenceNum @ EOT. Stuff still in array so purgeit, then send EOT
+                {
+                    sendPackets(packetsContainer);
+                    sendMode = false;
                     
-                    System.out.println("WINDOW NOT EMPTY BEFORE EOT. PURGING EOT");
-                    //System.out.println("Packet created for " + i);
-                   
-
-                    HostA.sendPackets(packetsContainer);
-
                 }
             }
         }
