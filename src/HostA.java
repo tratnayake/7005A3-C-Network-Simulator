@@ -62,6 +62,8 @@ public class HostA {
     
     public static boolean LAST;
     
+    public static ArrayList<Packet> remainingPacketsContainer;
+    
     public static void main(String args[]) throws Exception {
         
         Config config = new Config();
@@ -89,7 +91,7 @@ public class HostA {
 
         
 
-        timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 3;
+        timeOutLength = Integer.parseInt(config.getProp().getProperty("delay")) * 4;
         
         String networkAddress = config.getProp().getProperty("hostAToNet");
         networkAddr = InetAddress.getByName(networkAddress);
@@ -103,6 +105,14 @@ public class HostA {
         writer.println(timeStamp()+": "+"Start Command is " + startCommand);
 
         //Create new packetsContainer to hold packets (this is essentially our window)
+        
+        remainingPacketsContainer = new ArrayList<>();
+        //POPULATE A 100 PACKETS INTO THE ARRAY LIST
+        for(int i = 1; i < 100; i ++){
+           Packet packet = new Packet (1,i,window,i);
+           remainingPacketsContainer.add(packet);
+        }
+        
         packetsContainer = new ArrayList<>();
 
         ackedPacketsContainer = new ArrayList<>();
@@ -154,61 +164,48 @@ public class HostA {
     }
 
     public static void SEND(){
-    if (!LAST){
-         //S1: Empty container
-        if(packetsContainer.isEmpty()){
-            
-            for (int i = 1; i <= window; i++) {
-                    checkLast();
-                    //Create the packets to send
-                    Packet packet = new Packet(1, seqNum, 5, seqNum);
-                    //Add those packets to the container (window)
-                    packetsContainer.add(packet);
-                    //System.out.println("Packet created for " + i);
-                    
-                    writer.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
-                    //Increase the sequence number
-                    seqNum++;
+        
+        //Scenario 1 = BRAND NEW. Nothing inaarray
+       if (packetsContainer.isEmpty()){
+           for (int i = 0; i < window; i ++){
+               //ONly if there is next element (if stuff left to send is not empty)
+               if (!remainingPacketsContainer.isEmpty()){
+                    //Grab from the remaining packets container
+                    packetsContainer.add(remainingPacketsContainer.get(i));
+                    //delete from the reamining packets Ccontainer
+                    remainingPacketsContainer.remove(i);
+                } 
+               //array is empty and there is NOTHING left to send
+               else {
+                   //SEND THAT EOT
+                   sendEOT();
+               }
+           }
+       }
+       else{
+           //Scenario 2: Stuff still in array because packets not ACKED
+           for (int i = packetsContainer.size() +1; i < window; i++){
+               // Only if there is still stuff to add
+               if (!remainingPacketsContainer.isEmpty()){
+                    //Grab from the remaining packets container
+                    packetsContainer.add(remainingPacketsContainer.get(i));
+                    //delete from the reamining packets Ccontainer
+                    remainingPacketsContainer.remove(i);
                 }
-        }
-        //S2: Not Empty container
-        else{
-            System.out.println("Not Empty container becuz size "+packetsContainer.size());
-            for (int i = packetsContainer.size() + 1; i <= window; i++) {
-                    checkLast();
-                    //Create the packets to send
-                    Packet packet = new Packet(1, seqNum, 5, seqNum);
-                    //Add those packets to the container (window)
-                    packetsContainer.add(packet);
-                    //System.out.println("Packet created for " + i);
-                    
-                    writer.println(timeStamp()+": "+"Packet #" + packet.getSeqNum() + " added to container");
-                    //Increase the sequence number
-                    seqNum++;
-                }
-        }
-        
-        sendPackets(packetsContainer);
-        
-        sendMode = false;
-    }
-    // This is the LAST in our max
-    else{
-        
-        //If there are still pax in flight
-        if(!packetsContainer.isEmpty()){
-            sendPackets(packetsContainer);
-            sendMode = false;
-        }
-        
-        else{
-            System.out.println("All packets have been sent, array size is "+packetsContainer.size());
-            System.out.println("\n ******ALL THATS LEFT IS EOT***** \n");
-            sendEOT();
-        }
-        
-    }
-        
+               else{
+                   // Stuff still in array, but is empty
+               }
+           }
+       }
+       
+       if(!packetsContainer.isEmpty()){
+       sendPackets(packetsContainer);
+       sendMode = false;
+       }
+       else{
+           System.out.println("Nothing left to send");
+       }
+   
     }
     // Check if this is the last seqNum
     public static void checkLast(){
@@ -231,6 +228,7 @@ public class HostA {
     
     public static void sendEOT(){
         System.out.println("SEND EOT PEW PEW");
+        
     }
     public static byte[] prepPacket(Packet packet) {
         //Serialize packet object into a bytearray
