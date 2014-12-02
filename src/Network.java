@@ -6,7 +6,7 @@
 
 /**
  *
- * @author thilinaratnayake
+ * @author Elton Sia A008008541 & Thilina Ratnayake A00802338
  */
 
 import java.io.*;
@@ -31,7 +31,7 @@ public class Network {
     public static int timer;
             
     
-    /*
+    /**
     *Asks the user to input which use will be the sender
     *Sends the user input to the method sendControlSignal and let that method handle it
     *Creatse a thread for each host to use
@@ -104,9 +104,11 @@ public class Network {
         
     }
     
-    /*
-    *Sends the command to each hosts to tell them whether they are a sender or receiver
-    */
+    /**
+     *  Sends the command to each hosts to tell them whether they are a sender or receiver
+     * 
+     * @param sender 
+     */
     public static void sendControlSignal(String sender){
 
         try {

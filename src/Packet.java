@@ -6,9 +6,11 @@ import java.io.Serializable;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-/**
+
+/**Packet is serializable. So that it can be broken down into bytes to be sent 
+ * over the network.
  *
- * @author User
+ * @author Elton Sia A008008541 & Thilina Ratnayake A00802338
  */
 public class Packet implements Serializable {
     
