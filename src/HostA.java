@@ -250,7 +250,7 @@ public class HostA {
 
             timer = new Timer();
             timer.schedule(new timeOut("A") {
-            }, timeOutLength);
+            }, 2000);
             sendSocket.close();
             System.out.println("Last pax sent, timer created, socket closed \n\n");
             writer.println(timeStamp()+": "+"Last packet in current window SENT. TIMER STARTED\n\n");
