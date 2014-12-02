@@ -167,8 +167,10 @@ public class HostA {
         
         //Scenario 1 = BRAND NEW. Nothing inaarray
        if (packetsContainer.isEmpty()){
-           for (int i = 0; i < window; i ++){
+           System.out.println("Scenario 1");
+           for (int i = 1; i <= window; i ++){
                //ONly if there is next element (if stuff left to send is not empty)
+               System.out.println("More packets left to grab");
                if (!remainingPacketsContainer.isEmpty()){
                     //Grab from the remaining packets container
                     packetsContainer.add(remainingPacketsContainer.get(i));
@@ -177,6 +179,7 @@ public class HostA {
                 } 
                //array is empty and there is NOTHING left to send
                else {
+                   System.out.println("No packets left to grab, go to EOT");
                    //SEND THAT EOT
                    sendEOT();
                }
@@ -184,9 +187,12 @@ public class HostA {
        }
        else{
            //Scenario 2: Stuff still in array because packets not ACKED
-           for (int i = packetsContainer.size() +1; i < window; i++){
+           System.out.println("Scenario 2");
+           for (int i = packetsContainer.size() +1; i <= window; i++){
                // Only if there is still stuff to add
+               System.out.println("There is still stuff to send");
                if (!remainingPacketsContainer.isEmpty()){
+                   System.out.println("If there's sill stuf to grab");
                     //Grab from the remaining packets container
                     packetsContainer.add(remainingPacketsContainer.get(i));
                     //delete from the reamining packets Ccontainer
@@ -194,6 +200,7 @@ public class HostA {
                 }
                else{
                    // Stuff still in array, but is empty
+                   System.out.println("STuff still in array but to grab is is empty, go down to sendPackets");
                }
            }
        }
