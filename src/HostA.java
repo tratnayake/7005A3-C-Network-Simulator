@@ -188,7 +188,7 @@ public class HostA {
        else{
            //Scenario 2: Stuff still in array because packets not ACKED
            System.out.println("Scenario 2");
-           for (int i = packetsContainer.size() +1; i <= window; i++){
+           for (int i = packetsContainer.size() +1; i < window; i++){
                // Only if there is still stuff to add
                System.out.println("There is still stuff to send");
                if (!remainingPacketsContainer.isEmpty()){
